@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <complex.h>
-#include <math.h>
 #include "test.h"
 #include "pair_string_double.h"
 #include "linear_map.h"
@@ -12,13 +10,6 @@
 #define SIZE1 128
 #define SIZE2 256
 #define MAX_SIZE 1024
-
-int is_func(char *str, int i) {
-    //FIND FUNCTION IN FUNCS ARRAY
-    //RETURN 4 IF FOUNDED
-    //RETURN 0 IF NOT
-    return 0;
-}
 
 int is_oper (char *str, int i) {
     if (str[i] == '^') {
@@ -40,94 +31,6 @@ int push(char stack[MAX_SIZE][256], int cur, char str[256]) {
         cur++;
     }
     return cur;
-}
-
-void input(int *expressions_count, int *vars_count, char expressions[SIZE1][SIZE2], char vars[SIZE1][SIZE2], char vars_names[SIZE1][SIZE2], char c_vars[SIZE1][SIZE2], char c_vars_names[SIZE1][SIZE2], int *c_vars_count) {
-    FILE *fin;
-    fin = fopen("input.txt", "r");
-    char file_read_str[SIZE2];
-    while (fgets(file_read_str, SIZE2, fin) != NULL) {
-        int len = (int)strlen(file_read_str) - 1;
-        int is_varuable = 0;
-        for (int i = 0; i < len; i++) {
-            if (file_read_str[i] == '=') {
-                is_varuable = 1;
-                break;
-            }
-        }
-        if (is_varuable == 1) {
-            char vars_without_spaces[SIZE2] = {'\0'};
-            int is_complex = 0;
-            for (int i = 0; i < len; i++) {
-                if (file_read_str[i] == 'j') {
-                    is_complex = 1;
-                    break;
-                }
-            }
-            if (is_complex == 1) {
-                int new_i = 0;
-                for (int i = 0; i < len; i++) {
-                    if (file_read_str[i] != ' ') {
-                        vars_without_spaces[new_i] = file_read_str[i];
-                        new_i++;
-                    }
-                }
-                new_i = 0;
-                int was_equal = 0;
-                for (int i = 0; i < strlen(vars_without_spaces); i++) {
-                    if (vars_without_spaces[i] == '=') {
-                        i++;
-                        new_i = 0;
-                        was_equal = 1;
-                    }
-                    if (was_equal == 0) {
-                        c_vars_names[*c_vars_count][i] = vars_without_spaces[i];
-                    } else {
-                        c_vars[*c_vars_count][new_i] = vars_without_spaces[i];
-                        new_i++;
-                    }
-                }
-                *c_vars_count = *c_vars_count + 1;
-            } else {
-                int new_i = 0;
-                for (int i = 0; i < len; i++) {
-                    if (file_read_str[i] != ' ') {
-                        vars_without_spaces[new_i] = file_read_str[i];
-                        new_i++;
-                    }
-                }
-                new_i = 0;
-                int was_equal = 0;
-                for (int i = 0; i < strlen(vars_without_spaces) - 1; i++) {
-                    if (vars_without_spaces[i] == '=') {
-                        i++;
-                        new_i = 0;
-                        was_equal = 1;
-                    }
-                    if (was_equal == 0) {
-                        vars_names[*vars_count][i] = vars_without_spaces[i];
-                    } else {
-                        vars[*vars_count][new_i] = vars_without_spaces[i];
-                        new_i++;
-                    }
-                }
-                *vars_count = *vars_count + 1;
-            }
-        } else if (file_read_str[0] != '\0' && file_read_str[0] != '\n'){
-            char expressions_without_spaces[SIZE2] = {'\0'};
-            int new_i = 0;
-            for (int i = 0; i < len; i++) {
-                if (file_read_str[i] != ' ' && file_read_str[i] != '\n') {
-                    expressions_without_spaces[new_i] = file_read_str[i];
-                    new_i++;
-                }
-            }
-            new_i = 0;
-            strcpy(expressions[*expressions_count], expressions_without_spaces);
-            *expressions_count = *expressions_count + 1;
-        }
-    }
-    fclose(fin);
 }
 
 int is_empty(const char stack[MAX_SIZE][256], unsigned cur) {
@@ -166,9 +69,6 @@ int main(int argc, char** argv) {
     char vars[SIZE1][SIZE2] = {'\0'};
     char vars_names[SIZE1][SIZE2] = {'\0'};
     int vars_count = 0;
-    char c_vars[SIZE1][SIZE2] = {'\0'};          //c - complex
-    char c_vars_names[SIZE1][SIZE2] = {'\0'};
-    int c_vars_count = 0;
     char funcs[13][SIZE2] = {'\0'};
     char funcs_names[13][SIZE2] = {
             "cos",
@@ -185,22 +85,6 @@ int main(int argc, char** argv) {
             "mag",
             "phase"
     };
-    /*
-     add functions
-     */
-    input(&expressions_count, &vars_count, expressions, vars, vars_names, c_vars, c_vars_names, &c_vars_count);
-
-    //               765
-//    char str[256] = "5+765-abc+exp(4353)*65565\n";
-    /*
-     str = 5^765-abc*65565-6+5
-           [0   1   2   3   4   5   6   7   8   9]
-           [+   .   .   .   .   .   .   .   .   .]
-      5,767,^,abc,65565,*,*,6,-,6,+
-
-      5,765,^,abc,65565,*,-,6,-,5,+
-
-     */
     char str[256] = "5^765-abc*65565-6+5\n";
     int abc = 5;
     int cur_rpn = 0;
@@ -221,18 +105,18 @@ int main(int argc, char** argv) {
     char* expression = (char*) malloc(sizeof(char) * MAX_EXPRESSION_SIZE);
     fgets(expression, MAX_EXPRESSION_SIZE,  file_input);
 
-    int number_of_vars = number_of_lines - 1;
-    char** input_strings = (char**) malloc(sizeof(char*) * number_of_vars);
-    for (int i = 0; i < number_of_vars; ++i) {
+    int number_of_numbers = number_of_lines - 1;
+    char** input_strings = (char**) malloc(sizeof(char*) * number_of_numbers);
+    for (int i = 0; i < number_of_numbers; ++i) {
         input_strings[i] = (char*) malloc(sizeof(char) * MAX_EXPRESSION_SIZE);
         fgets(input_strings[i], MAX_EXPRESSION_SIZE, file_input);
     }
-    LINEAR_MAP vars_map = ParseVariables(input_strings, number_of_vars);
+    LINEAR_MAP vars_map = ParseVariables(input_strings, number_of_numbers);
 
 
         for (int i = 0; i < strlen(str) - 1; i++) {
             int is_func = 0;
-            int is_var = 0;
+            int is_number = 0;
             int k = 0;
             char tmp_str[256] = { '\0' };
             char tmp_func_str[256] = { '\0' };
@@ -250,26 +134,26 @@ int main(int argc, char** argv) {
                 for (int n = 0; n < strlen(tmp_str); n++) {
                     if (tmp_str[n] == '(') {
                         is_func = 1;
-                        is_var = 0;
+                        is_number = 0;
                         break;
                     }
                 }
                 if (!is_func) {
                     is_func = 0;
-                    is_var = 1;
+                    is_number = 1;
                 }
                 else {
                     strcpy(tmp_func_str, tmp_str);
                 }        }
-            if (!is_func && is_var) {
+            if (!is_func && is_number) {
                 cur_rpn = push(rpn, cur_rpn, tmp_str); // function "push" return cur_rpn++
                 i = i + k - 1;
 
             }
             else if (is_func) {
-                char jnefejnjfewfjnwnife[1];
-                jnefejnjfewfjnwnife[0] = 40; //str where first element is "("
-                cur_oper_stack = push(oper_stack, cur_oper_stack, jnefejnjfewfjnwnife); // 40 - ASCII CODE OF "("
+                char symb_zero[1];
+                symb_zero[0] = 40; //str where first element is "("
+                cur_oper_stack = push(oper_stack, cur_oper_stack, symb_zero); // 40 - ASCII CODE OF "("
                 // expon(23424+3423+2)
                 //count number of letters in name of function
                 int counter = 0;
@@ -325,13 +209,6 @@ int main(int argc, char** argv) {
             cur_rpn = push(rpn, cur_rpn, top_oper);
             cur_oper_stack = pop(oper_stack, cur_oper_stack);
         }
-
-        printf("{");
-        for (int i = 0; i < cur_rpn; i++) {
-            printf("%s,",rpn[i]);
-        }
-        printf("}\n");
-
 
     return 0;
 }
