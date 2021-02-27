@@ -1,11 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "test.h"
 #include "linear_map.h"
+#include "calculation.h"
 
-void Test() {
-    // TEST 1 (map works)
+bool AreDoublesEqual(double d1, double d2) {
+    if (fabs(d1 - d2) < ERROR) {
+        return false;
+    }
+    return true;
+}
+
+void MapTest() {
     LINEAR_MAP map = CreateMap();
     PAIR_STRING_DOUBLE pair1 = {"one", 1};
     PAIR_STRING_DOUBLE pair2 = {"two", 2};
@@ -24,7 +32,7 @@ void Test() {
 
     double find1 = Find(&map, "three");
     double expected1 = 3;
-    if (fabs(find1 - expected1) > ERROR) {
+    if (AreDoublesEqual(find1, expected1)) {
         printf("Found:\n%lf\n", find1);
         printf("Expected:\n%lf\n", expected1);
         abort();
@@ -43,4 +51,63 @@ void Test() {
         printf("Size after erasing: %zu, expected: %zu\n", map.size, size_after_erasing);
         abort();
     }
+}
+
+void RpnCalculationTest() {
+    int size1 = 5;
+    char stack_polish1[1024][256];
+    // 2+2*2 = 6
+    strcpy(stack_polish1[0], "2");
+    strcpy(stack_polish1[1], "2");
+    strcpy(stack_polish1[2], "2");
+    strcpy(stack_polish1[3], "*");
+    strcpy(stack_polish1[4], "+");
+    double result1 = Calculate(stack_polish1, size1);
+    double expected1 = 6;
+    if (AreDoublesEqual(result1, expected1)) {
+        printf("Wrong calculation result 1: %lf, expected: %lf\n", result1, expected1);
+    }
+
+    // 1+2^6-2^3*6 = 17
+    // 1 2 6 ^ + 2 3 ^ 6 * -
+    int size2 = 11;
+    char stack_polish2[1024][256];
+    strcpy(stack_polish2[0], "1");
+    strcpy(stack_polish2[1], "2");
+    strcpy(stack_polish2[2], "6");
+    strcpy(stack_polish2[3], "^");
+    strcpy(stack_polish2[4], "+");
+    strcpy(stack_polish2[5], "2");
+    strcpy(stack_polish2[6], "3");
+    strcpy(stack_polish2[7], "^");
+    strcpy(stack_polish2[8], "6");
+    strcpy(stack_polish2[9], "*");
+    strcpy(stack_polish2[10], "-");
+    double result2 = Calculate(stack_polish2, size2);
+    double expected2 = 17;
+    if (AreDoublesEqual(result2, expected2)) {
+        printf("Wrong calculation result 2: %lf, expected: %lf\n", result2, expected2);
+    }
+
+    // 1.5-0.0004*765-3.333333333 = -2.139333333
+    // 1.5 0.0004 765 * - 3.33333333 -
+    int size3 = 7;
+    char stack_polish3[1024][256];
+    strcpy(stack_polish3[0], "1.5");
+    strcpy(stack_polish3[1], "0.0004");
+    strcpy(stack_polish3[2], "765");
+    strcpy(stack_polish3[3], "*");
+    strcpy(stack_polish3[4], "-");
+    strcpy(stack_polish3[5], "3.33333333");
+    strcpy(stack_polish3[6], "-");
+    double result3 = Calculate(stack_polish3, size3);
+    double expected3 = -2.139333333;
+    if (AreDoublesEqual(result3, expected3)) {
+        printf("Wrong calculation result 3: %lf, expected: %lf\n", result3, expected3);
+    }
+}
+
+void Test() {
+    MapTest();
+    RpnCalculationTest();
 }
