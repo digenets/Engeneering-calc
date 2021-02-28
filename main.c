@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 #include <complex.h>
 #include "test.h"
@@ -51,111 +52,6 @@ int pop(char stack[MAX_SIZE][256], unsigned cur){
     return cur;
 }
 
-void input(int *expressions_count, int *vars_count, char expressions[SIZE1][SIZE2], char vars[SIZE1][SIZE2], char vars_names[SIZE1][SIZE2], char c_vars[SIZE1][SIZE2], char c_vars_names[SIZE1][SIZE2], int *c_vars_count) {
-    FILE *fin;
-    fin = fopen("input.txt", "r");
-    char file_read_str[SIZE2];
-    while (fgets(file_read_str, SIZE2, fin) != NULL) {
-        int len = (int)strlen(file_read_str) - 1;
-        int is_varuable = 0;
-        for (int i = 0; i < len; i++) {
-            if (file_read_str[i] == '=') {
-                is_varuable = 1;
-                break;
-            }
-        }
-        if (is_varuable == 1) {
-            char vars_without_spaces[SIZE2] = {'\0'};
-            int is_complex = 0;
-            for (int i = 0; i < len; i++) {
-                if (file_read_str[i] == 'j') {
-                    is_complex = 1;
-                    break;
-                }
-            }
-            if (is_complex == 1) {
-                int new_i = 0;
-                for (int i = 0; i < len; i++) {
-                    if (file_read_str[i] != ' ') {
-                        vars_without_spaces[new_i] = file_read_str[i];
-                        new_i++;
-                    }
-                }
-                new_i = 0;
-                int was_equal = 0;
-                for (int i = 0; i < strlen(vars_without_spaces); i++) {
-                    if (vars_without_spaces[i] == '=') {
-                        i++;
-                        new_i = 0;
-                        was_equal = 1;
-                    }
-                    if (was_equal == 0) {
-                        c_vars_names[*c_vars_count][i] = vars_without_spaces[i];
-                    } else {
-                        c_vars[*c_vars_count][new_i] = vars_without_spaces[i];
-                        new_i++;
-                    }
-                }
-                *c_vars_count = *c_vars_count + 1;
-            } else {
-                int new_i = 0;
-                for (int i = 0; i < len; i++) {
-                    if (file_read_str[i] != ' ') {
-                        vars_without_spaces[new_i] = file_read_str[i];
-                        new_i++;
-                    }
-                }
-                new_i = 0;
-                int was_equal = 0;
-                for (int i = 0; i < strlen(vars_without_spaces) - 1; i++) {
-                    if (vars_without_spaces[i] == '=') {
-                        i++;
-                        new_i = 0;
-                        was_equal = 1;
-                    }
-                    if (was_equal == 0) {
-                        vars_names[*vars_count][i] = vars_without_spaces[i];
-                    } else {
-                        vars[*vars_count][new_i] = vars_without_spaces[i];
-                        new_i++;
-                    }
-                }
-                *vars_count = *vars_count + 1;
-            }
-        } else if (file_read_str[0] != '\0' && file_read_str[0] != '\n'){
-            char expressions_without_spaces[SIZE2] = {'\0'};
-            int new_i = 0;
-            for (int i = 0; i < len; i++) {
-                if (file_read_str[i] != ' ' && file_read_str[i] != '\n') {
-                    expressions_without_spaces[new_i] = file_read_str[i];
-                    new_i++;
-                }
-            }
-            new_i = 0;
-            strcpy(expressions[*expressions_count], expressions_without_spaces);
-            *expressions_count = *expressions_count + 1;
-        }
-    }
-    fclose(fin);
-}
-
-void output(int *expressions_count, int *vars_count, char expressions[SIZE1][SIZE2], char vars[SIZE1][SIZE2], char vars_names[SIZE1][SIZE2], int expressions_results[SIZE1], char c_vars[SIZE1][SIZE2], char c_vars_names[SIZE1][SIZE2], int *c_vars_count) {
-    FILE *fout;
-    fout = fopen("output.txt", "w");
-    fprintf(fout, "vars:\n");
-    for (int i = 0; i < *vars_count; i++) {
-        fprintf(fout, "%s = %s\n", vars_names[i], vars[i]);
-    }
-    fprintf(fout, "\ncomplex vars:\n");
-    for (int i = 0; i < *c_vars_count; i++) {
-        fprintf(fout, "%s = %s\n", c_vars_names[i], c_vars[i]);
-    }
-    fprintf(fout, "\nexpressions:\n");
-    for (int i = 0; i < *expressions_count; i++) {
-        fprintf(fout, "%s = /*%d*/(result of calculation)\n", expressions[i], expressions_results[i]);
-    }
-    fclose(fout);
-}
 
 LINEAR_MAP ParseVariables(char** strings, int number_of_vars) {
     LINEAR_MAP map = CreateMap();
@@ -174,13 +70,10 @@ int main(int argc, char** argv) {
     char expressions[SIZE1][SIZE2] = {'\0'};
     int expressions_results[SIZE1] = {0};
     int expressions_count = 0;
-    char vars[SIZE1][SIZE2] = {'\0'};
-    char vars_names[SIZE1][SIZE2] = {'\0'};
-    int vars_count = 0;
-    char c_vars[SIZE1][SIZE2] = {'\0'};
-    char c_vars_names[SIZE1][SIZE2] = {'\0'};
-    int c_vars_count = 0;
-    char funcs[13][SIZE2] = {'\0'};
+    char variables[SIZE1][SIZE2] = {'\0'};
+    char variables_names[SIZE1][SIZE2] = {'\0'};
+    int variables_count = 0;
+    char functions[13][SIZE2] = {'\0'};
     char funcs_names[13][SIZE2] = {
             "cos",
             "sin",
@@ -198,9 +91,9 @@ int main(int argc, char** argv) {
     };
     char str[256] = "5^765-abc*65565-6+5\n";
     int abc = 5;
-    int cur_rpn = 0;
+    int current_rpn = 0;
     char rpn[MAX_SIZE][256];
-    int cur_oper_stack = 0;
+    int current_operator = 0;
     char oper_stack[MAX_SIZE][256];
 
     if (argc > 1 && strcmp(argv[1], TEST) == 0) {
@@ -225,11 +118,12 @@ int main(int argc, char** argv) {
     LINEAR_MAP vars_map = ParseVariables(input_strings, number_of_numbers);
 
     for (int i = 0; i < strlen(str) - 1; i++) {
-        int is_func = 0;
-        int is_variable = 0;
+        char token[256] = {'\0' };
+        char function[256] = {'\0' };
+        bool is_function = 0;
+        bool is_variable = 0;
         int k = 0;
-        char tmp_str[256] = { '\0' };
-        char tmp_func_str[256] = { '\0' };
+
         if ((str[i] >= '0' && str[i] <= '9') || (str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z')) {
             for (int j = i; j < strlen(str) - 1; j++) {
                 if (is_oper(str, j)) {
@@ -238,114 +132,114 @@ int main(int argc, char** argv) {
                 if (str[j] == ')') {//WARNING
                     break;
                 }
-                tmp_str[k] = str[j];
+                token[k] = str[j];
                 k++;
             }
-            for (int n = 0; n < strlen(tmp_str); n++) {
-                if (tmp_str[n] == '(') {
-                    is_func = 1;
+            for (int n = 0; n < strlen(token); n++) {
+                if (token[n] == '(') {
+                    is_function = 1;
                     is_variable = 0;
                     break;
                 }
             }
-            if (!is_func) {
-                is_func = 0;
+            if (!is_function) {
+                is_function = 0;
                 is_variable = 1;
             }
             else {
-                strcpy(tmp_func_str, tmp_str);
+                strcpy(function, token);
             }
         }
-        if (!is_func && is_variable) {
-            cur_rpn = push(rpn, cur_rpn, tmp_str); // function "push" return cur_rpn++
+        if (!is_function && is_variable) {
+            current_rpn = push(rpn, current_rpn, token); // function "push" return current_rpn++
             i = i + k - 1;
         }
-        else if (is_func) {
+        else if (is_function) {
             // expon(23424+3423+2)
             //count number of letters in name of function
-            int counter = 0;
-            for (int j = 0; j < strlen(tmp_func_str); j++) {
-                if (tmp_func_str[j] == 40) {
-                    counter++;
+            int c = 0;
+            for (int j = 0; j < strlen(function); j++) {
+                if (function[j] == 40) {
+                    c++;
                     break;
                 }
-                counter++;
+                c++;
             }
-            i = i + counter - 2;
-            for (int j = 0; j < strlen(tmp_func_str); j++) {
-                if (j < counter - 1) {
-                    tmp_func_str[j] = tmp_func_str[j];
+            i = i + c - 2;
+            for (int j = 0; j < strlen(function); j++) {
+                if (j < c - 1) {
+                    function[j] = function[j];
                 } else {
-                    tmp_func_str[j] = '\0';
+                    function[j] = '\0';
                 }
             }
-            cur_oper_stack = push(oper_stack, cur_oper_stack, tmp_func_str);
+            current_operator = push(oper_stack, current_operator, function);
         }
         else if (is_oper(str, i)) {
-            char tmp_top = top(oper_stack, cur_oper_stack);
-            char str_tmp_top[256] = {'\0'};
-            str_tmp_top[0] = tmp_top;
+            char temporary_top = top(oper_stack, current_operator);
+            char token_top[256] = {'\0'};
+            token_top[0] = temporary_top;
             // Check that top of stack is operator
-            while  ( (top(oper_stack, cur_oper_stack) && is_oper(str_tmp_top, 0)) // пока стек не пустой и в топе оператор
+            while  ((top(oper_stack, current_operator) && is_oper(token_top, 0)) // пока стек не пустой и в топе оператор
                      &&
 
-                     (
-                             /*либо*/((is_oper(str, i) == 1 || is_oper(str, i) == 2)/*токен левоасоц*/ && (is_oper(str, i) <= is_oper(str_tmp_top, 0))/*и приоритет токена меньше либо равен топу*/)
+                    (
+                             /*либо*/((is_oper(str, i) == 1 || is_oper(str, i) == 2)/*токен левоасоц*/ && (is_oper(str, i) <= is_oper(token_top, 0))/*и приоритет токена меньше либо равен топу*/)
                                      ||
-                                     /*либо*/((is_oper(str, i) == 3) /*токен правоасоц*/ && (is_oper(str, i) < is_oper(str_tmp_top, 0)) /*и приоритет токена меньше топа*/)
+                                     /*либо*/((is_oper(str, i) == 3) /*токен правоасоц*/ && (is_oper(str, i) < is_oper(token_top, 0)) /*и приоритет токена меньше топа*/)
                      )
 
-                     && is_oper(str_tmp_top, 0) != 40
+                    && is_oper(token_top, 0) != 40
                     )
             {//while cicle
-                tmp_top = top(oper_stack, cur_oper_stack);
-                str_tmp_top[0] = tmp_top;
-                cur_rpn = push(rpn, cur_rpn, str_tmp_top);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+                temporary_top = top(oper_stack, current_operator);
+                token_top[0] = temporary_top;
+                current_rpn = push(rpn, current_rpn, token_top);
+                current_operator = pop(oper_stack, current_operator);
                 //retake
-                tmp_top = top(oper_stack, cur_oper_stack);
+                temporary_top = top(oper_stack, current_operator);
                 for (int j = 0; j < 256; j++) {
-                    str_tmp_top[j] = '\0';
+                    token_top[j] = '\0';
                 }
-                str_tmp_top[0] = tmp_top;
+                token_top[0] = temporary_top;
             }
             //end of while cicle
 
-            char str_tmp_oper[256] = { '\0' };
-            str_tmp_oper[0] = str[i];
-            cur_oper_stack = push(oper_stack, cur_oper_stack, str_tmp_oper);
+            char token_oper[256] = {'\0' };
+            token_oper[0] = str[i];
+            current_operator = push(oper_stack, current_operator, token_oper);
         }
         else if (str[i] == 40) {
-            char open_braket_str[256] = {'\0'};
-            open_braket_str[0] = 40; //str where first element is "("
-            cur_oper_stack = push(oper_stack, cur_oper_stack, open_braket_str);
+            char left_parentheses[256] = {'\0'};
+            left_parentheses[0] = 40; //str where first element is "("
+            current_operator = push(oper_stack, current_operator, left_parentheses);
         }
         else if (str[i] == 41) {
-            while (top(oper_stack, cur_oper_stack) != '(') {
-                char str_tmp_top[256] = {'\0'};
-                char tmp_top = top(oper_stack, cur_oper_stack);
-                str_tmp_top[0] = tmp_top;
-                cur_rpn = push(rpn, cur_rpn, str_tmp_top);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+            while (top(oper_stack, current_operator) != '(') {
+                char token_top[256] = {'\0'};
+                char tmp_top = top(oper_stack, current_operator);
+                token_top[0] = tmp_top;
+                current_rpn = push(rpn, current_rpn, token_top);
+                current_operator = pop(oper_stack, current_operator);
             }
-            if (top(oper_stack, cur_oper_stack) == '(') {
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+            if (top(oper_stack, current_operator) == '(') {
+                current_operator = pop(oper_stack, current_operator);
             }
-            if ((top(oper_stack, cur_oper_stack) >= 'A' && top(oper_stack, cur_oper_stack) <= 'Z') || (top(oper_stack, cur_oper_stack) >= 'a' && top(oper_stack, cur_oper_stack) <= 'z')) {
-                cur_rpn = push(rpn, cur_rpn, oper_stack[cur_oper_stack-1]);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+            if ((top(oper_stack, current_operator) >= 'A' && top(oper_stack, current_operator) <= 'Z') || (top(oper_stack, current_operator) >= 'a' && top(oper_stack, current_operator) <= 'z')) {
+                current_rpn = push(rpn, current_rpn, oper_stack[current_operator - 1]);
+                current_operator = pop(oper_stack, current_operator);
             }
         }
     }
-    while (!is_empty(oper_stack, cur_oper_stack)) {
+    while (!is_empty(oper_stack, current_operator)) {
         char top_oper[256];
-        top_oper[0] = top(oper_stack, cur_oper_stack);
-        cur_rpn = push(rpn, cur_rpn, top_oper);
-        cur_oper_stack = pop(oper_stack, cur_oper_stack);
+        top_oper[0] = top(oper_stack, current_operator);
+        current_rpn = push(rpn, current_rpn, top_oper);
+        current_operator = pop(oper_stack, current_operator);
     }
 
     printf("{");
-    for (int i = 0; i < cur_rpn; i++) {
+    for (int i = 0; i < current_rpn; i++) {
         printf("%s,",rpn[i]);
     }
     printf("}\n");
