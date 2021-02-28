@@ -1,8 +1,7 @@
 #ifndef ENGINEERING_CALC_CALCULATION_H
 #define ENGINEERING_CALC_CALCULATION_H
 
-#define MAX_RPN_SIZE 1024
-#define MAX_ELEMENT_SIZE 256
+#include "constants.h"
 
 double Calculate(char rpn[MAX_RPN_SIZE][MAX_ELEMENT_SIZE], int rpn_size);
 

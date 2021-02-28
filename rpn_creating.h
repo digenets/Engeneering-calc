@@ -1,0 +1,6 @@
+#ifndef ENGINEERING_CALC_RPN_CREATING_H
+#define ENGINEERING_CALC_RPN_CREATING_H
+
+char* ReplaceUnaryMinus(char* expression);
+
+#endif //ENGINEERING_CALC_RPN_CREATING_H

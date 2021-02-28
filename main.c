@@ -6,13 +6,11 @@
 #include "pair_string_double.h"
 #include "linear_map.h"
 #include "calculation.h"
-
-#define MAX_EXPR_SIZE 256
-#define MAX_VAR_NAME_SIZE 50
-#define MAX_RPN_SIZE 1024
+#include "constants.h"
+#include "rpn_creating.h"
 
 int is_oper (char c) {
-    if (c == '^') {
+    if (c == '^' || c == '~') {
         return 3;
     }
     if ((c == '*') || (c == '/')) {
@@ -78,6 +76,7 @@ int main(int argc, char** argv) {
     if (expression[strlen(expression) - 1] == '\n') {
         expression[strlen(expression) - 1] = '\0';
     }
+    expression = ReplaceUnaryMinus(expression);
 
     int number_of_vars = number_of_lines - 1;
     char** input_strings = (char**) malloc(sizeof(char*) * number_of_vars);

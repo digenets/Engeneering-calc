@@ -58,7 +58,9 @@ double Calculate(char rpn[MAX_RPN_SIZE][MAX_ELEMENT_SIZE], int rpn_size) {
                 }
             } else {
                 double operand = PopFromStackDouble(&stack_of_numbers);
-                if (strcmp(operator, "cos") == 0) {
+                if (strcmp(operator, "~") == 0) {
+                    result = (-1) * operand;
+                } else if (strcmp(operator, "cos") == 0) {
                     result = cos(operand);
                 } else if (strcmp(operator, "sin") == 0) {
                     result = sin(operand);

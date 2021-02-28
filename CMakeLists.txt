@@ -9,6 +9,8 @@ add_executable(Engineering_calc
         pair_string_double.c pair_string_double.h
         test.c test.h
         stack_double.c stack_double.h
-        calculation.c calculation.h)
+        calculation.c calculation.h
+        rpn_creating.c rpn_creating.h
+        constants.h)
 
 target_link_libraries(Engineering_calc PRIVATE m)

@@ -5,6 +5,8 @@
 #include "test.h"
 #include "linear_map.h"
 #include "calculation.h"
+#include "constants.h"
+#include "rpn_creating.h"
 
 bool AreDoublesEqual(double d1, double d2) {
     if (fabs(d1 - d2) < ERROR) {
@@ -107,7 +109,26 @@ void RpnCalculationTest() {
     }
 }
 
+void ReplaceUnaryMinusTest() {
+    char* expression = "-1-2";
+    expression = ReplaceUnaryMinus(expression);
+    char* expected = "~1-2";
+    if (strcmp(expected, expression) != 0) {
+        printf("Wrong replacement: %s, expected: %s", expression, expected);
+        abort();
+    }
+
+    char* expression2 = "2 + (-1)";
+    expression2 = ReplaceUnaryMinus(expression2);
+    char* expected2 = "2 + (~1)";
+    if (strcmp(expected2, expression2) != 0) {
+        printf("Wrong replacement: %s, expected: %s", expression2, expected2);
+        abort();
+    }
+}
+
 void Test() {
     MapTest();
     RpnCalculationTest();
+    ReplaceUnaryMinusTest();
 }
