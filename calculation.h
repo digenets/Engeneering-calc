@@ -1,9 +1,9 @@
 #ifndef ENGINEERING_CALC_CALCULATION_H
 #define ENGINEERING_CALC_CALCULATION_H
 
-#define MAX_SIZE 1024
+#define MAX_RPN_SIZE 1024
 #define MAX_ELEMENT_SIZE 256
 
-double Calculate(char rpn[MAX_SIZE][MAX_ELEMENT_SIZE], int rpn_size);
+double Calculate(char rpn[MAX_RPN_SIZE][MAX_ELEMENT_SIZE], int rpn_size);
 
 #endif //ENGINEERING_CALC_CALCULATION_H
