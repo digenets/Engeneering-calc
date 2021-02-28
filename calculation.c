@@ -27,7 +27,7 @@ bool IsBinary(char* operator) {
     }
 }
 
-double Calculate(char rpn[MAX_RPN_SIZE][MAX_ELEMENT_SIZE], int rpn_size) {
+double Calculate(char** rpn, int rpn_size) {
     STACK_DOUBLE stack_of_numbers = CreateStackDouble();
     for (int i = 0; i < rpn_size; ++i) {
         if (IsDigit(rpn[i])) {

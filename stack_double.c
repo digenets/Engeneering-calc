@@ -10,7 +10,7 @@ STACK_DOUBLE CreateStackDouble() {
 
 bool PushToStackDouble(STACK_DOUBLE* stack, double num) {
     if (stack->free_index < MAX_STACK_SIZE) {
-        stack->stack[stack->free_index] = num;   // потом можно сделать reallocate
+        stack->stack[stack->free_index] = num;
         ++(stack->free_index);
         return true;
     }

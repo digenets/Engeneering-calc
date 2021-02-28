@@ -57,7 +57,11 @@ void MapTest() {
 
 void RpnCalculationTest() {
     int size1 = 5;
-    char stack_polish1[1024][256];
+    char** stack_polish1 = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
+        stack_polish1[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
+    }
+
     // 2+2*2 = 6
     strcpy(stack_polish1[0], "2");
     strcpy(stack_polish1[1], "2");
@@ -73,7 +77,10 @@ void RpnCalculationTest() {
     // 1+2^6-2^3*6 = 17
     // 1 2 6 ^ + 2 3 ^ 6 * -
     int size2 = 11;
-    char stack_polish2[1024][256];
+    char** stack_polish2 = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
+        stack_polish2[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
+    }
     strcpy(stack_polish2[0], "1");
     strcpy(stack_polish2[1], "2");
     strcpy(stack_polish2[2], "6");
@@ -94,7 +101,10 @@ void RpnCalculationTest() {
     // 1.5-0.0004*765-3.333333333 = -2.139333333
     // 1.5 0.0004 765 * - 3.33333333 -
     int size3 = 7;
-    char stack_polish3[1024][256];
+    char** stack_polish3 = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
+        stack_polish3[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
+    }
     strcpy(stack_polish3[0], "1.5");
     strcpy(stack_polish3[1], "0.0004");
     strcpy(stack_polish3[2], "765");
