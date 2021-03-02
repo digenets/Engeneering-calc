@@ -5,13 +5,23 @@
 #include <math.h>
 #include <stdio.h>
 #include <complex.h>
+#include <ctype.h>
 
 bool IsDigit(char *string) {
-    if ((strlen(string) > 1 && string[0] == '-') || (string[0] >= '0' && string[0] <= '9')) {
-        return true;
+    // если в начале тире - передать туда подстроку без тире
+    if (string[0] == '-' && strlen(string) > 1) {
+        return IsDigit(&string[1]);
     } else {
-        return false;
+        // если в начале не тире
+        for (int i = 0; i < strlen(string); ++i) {
+            if (isdigit(string[i]) || string[i] == '.') {
+                continue;
+            } else {
+                return false;
+            }
+        }
     }
+    return true;
 }
 
 bool IsBinary(char* operator) {
@@ -24,6 +34,16 @@ bool IsBinary(char* operator) {
         return true;
     } else {
         return false;
+    }
+}
+
+void ReplaceWithVarsValues(char** rpn, int rpn_objects_num, LINEAR_MAP* vars_map) {
+    // заменяем в rpn переменные на соответствующие значения
+    for (int i = 0; i < rpn_objects_num; ++i) {
+        double value = Find(vars_map, rpn[i]);
+        if (!isnan(value)) {
+            sprintf(rpn[i], "%lf", value);
+        }
     }
 }
 
