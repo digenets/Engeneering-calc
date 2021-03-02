@@ -35,15 +35,19 @@ int is_oper (char c) {
 }
 
 char** GetRpn(char* expression, int* rpn_objects_counter) {
+    expression = ReplaceUnaryMinus(expression);
+
     int cur_rpn = 0;
     char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
     for (int i = 0; i < MAX_RPN_SIZE; ++i) {
         rpn[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
+        memset(rpn[i], '\0', MAX_ELEMENT_SIZE);
     }
     int cur_oper_stack = 0;
     char** oper_stack = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
     for (int i = 0; i < MAX_RPN_SIZE; ++i) {
         oper_stack[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
+        memset(oper_stack[i], '\0', MAX_ELEMENT_SIZE);
     }
 
     for (int i = 0; i < strlen(expression); i++) {
@@ -180,7 +184,7 @@ char** GetRpn(char* expression, int* rpn_objects_counter) {
     printf("}\n");
 
     for (int i = 0; rpn[i][0] != '\0'; i++) {
-        (*rpn_objects_counter)++;
+        ++(*rpn_objects_counter);
     }
     return rpn;
 }

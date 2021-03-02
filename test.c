@@ -137,8 +137,38 @@ void ReplaceUnaryMinusTest() {
     }
 }
 
+void IsDigitTest() {
+    bool test1 = IsDigit("-1");
+    bool test2 = IsDigit("1-2");
+    bool test3 = IsDigit("sin(4)");
+    bool test4 = IsDigit("14+2");
+    bool test5 = IsDigit("14");
+
+    if (test1 != true) {
+        printf("Wrong answer on test: -1");
+        abort();
+    }
+    if (test2 != false) {
+        printf("Wrong answer on test: 1-2");
+        abort();
+    }
+    if (test3 != false) {
+        printf("Wrong answer on test: sin(4)");
+        abort();
+    }
+    if (test4 != false) {
+        printf("Wrong answer on test: 14+2");
+        abort();
+    }
+    if (test5 != true) {
+        printf("Wrong answer on test: 14");
+        abort();
+    }
+}
+
 void Test() {
     MapTest();
     RpnCalculationTest();
     ReplaceUnaryMinusTest();
+    IsDigitTest();
 }
