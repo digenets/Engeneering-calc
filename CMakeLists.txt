@@ -7,4 +7,11 @@ add_executable(Engineering_calc
         main.c
         linear_map.h linear_map.c
         pair_string_double.c pair_string_double.h
-        test.c test.h)
+        test.c test.h
+        stack_double.c stack_double.h
+        calculation.c calculation.h
+        rpn_creating.c rpn_creating.h
+        constants.h
+        stack_strings.c stack_strings.h)
+
+target_link_libraries(Engineering_calc PRIVATE m)

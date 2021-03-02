@@ -2,7 +2,7 @@
 #define ENGINEERING_CALC_TEST_H
 
 #define TEST "test"
-#define ERROR 0.0000001
+#define ERROR 0.000001
 
 void Test();
 
