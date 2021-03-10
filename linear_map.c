@@ -4,7 +4,7 @@
 #include "linear_map.h"
 
 LINEAR_MAP CreateMap() {
-    int capacity = 10;
+    int capacity = 10; // количество чего?
     PAIR_STRING_DOUBLE* pairs = (PAIR_STRING_DOUBLE*) malloc(sizeof(PAIR_STRING_DOUBLE) * capacity);
     LINEAR_MAP map;
     map.pairs = pairs;

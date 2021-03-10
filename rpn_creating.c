@@ -1,9 +1,12 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <math.h>
 #include "rpn_creating.h"
 #include "constants.h"
 #include "stack_strings.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "calculation.h"
 
 char* ReplaceUnaryMinus(char* expression) {
     // либо минус стоит в начале выражения: -1+...
@@ -34,20 +37,96 @@ int is_oper (char c) {
     return 0;
 }
 
+bool is_pow(char* expression, int position) {
+    if (expression[position] == 'p') {
+        char token[MAX_EXPR_SIZE] = {'\0'};
+        for (int j = 0; j < 4; j++) {
+            token[j] = expression[position];
+            position++;
+        }
+        if (strcmp(token, "pow(") == 0)
+            return true;
+        else return false;
+    }
+    return false;
+}
+
+double pow_counting(char * expression, int position){
+    position+=4;
+    int exp_rpn_objects_counter = 0;
+    int c = 0;
+    char* tmp_exp = (char*) malloc(sizeof(char) * MAX_EXPR_SIZE);
+    memset(tmp_exp, '\0', MAX_EXPR_SIZE);
+    char** exp1_rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int j = 0; j < MAX_RPN_SIZE; ++j) {
+        exp1_rpn[j] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(exp1_rpn[j], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
+    }
+    char** exp2_rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int j = 0; j < MAX_RPN_SIZE; ++j) {
+        exp2_rpn[j] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(exp2_rpn[j], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
+    }
+
+    while (expression[position] != ','){
+        *tmp_exp = expression[position];
+        position++;
+        tmp_exp++;
+        c++;
+    }
+    tmp_exp-=c;
+    position++;
+    if (expression[position] == ' ')
+        position++;
+    exp1_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter);
+    double exp1_result = Calculate(exp1_rpn, exp_rpn_objects_counter);
+    tmp_exp -= c;
+    memset(tmp_exp, '\0', c+1);
+    int exp_symb_number = 0;
+    while (expression[position] != ')'){
+        exp_symb_number++;
+        if (expression[position] == '('){
+            while(expression[position] != ')'){
+                position++;
+                exp_symb_number++;
+            }
+            position++;
+            exp_symb_number++;
+        }
+        position++;
+    }
+    c = 0;
+    for (int j = position-1; j < position-1 + exp_symb_number; j++){
+        *tmp_exp = expression[j];
+        c++;
+        tmp_exp++;
+    }
+    tmp_exp-=c;
+    exp_rpn_objects_counter = 0;
+    exp2_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter);
+    double exp2_result = Calculate(exp2_rpn, exp_rpn_objects_counter);
+    double pow_result = pow(exp1_result, exp2_result);
+    return pow_result;
+}
+      /*  else{
+            position-=3;
+        } */
+
+
 char** GetRpn(char* expression, int* rpn_objects_counter) {
-    expression = ReplaceUnaryMinus(expression);
+    expression = ReplaceUnaryMinus(expression);  // убирается унарный минус
 
     int cur_rpn = 0;
-    char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE); // массив строк под rpn
     for (int i = 0; i < MAX_RPN_SIZE; ++i) {
-        rpn[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
-        memset(rpn[i], '\0', MAX_ELEMENT_SIZE);
+        rpn[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(rpn[i], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
     }
     int cur_oper_stack = 0;
-    char** oper_stack = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    char** oper_stack = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE); // массив строк под операторный стек
     for (int i = 0; i < MAX_RPN_SIZE; ++i) {
-        oper_stack[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
-        memset(oper_stack[i], '\0', MAX_ELEMENT_SIZE);
+        oper_stack[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(oper_stack[i], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
     }
 
     for (int i = 0; i < strlen(expression); i++) {
@@ -56,6 +135,11 @@ char** GetRpn(char* expression, int* rpn_objects_counter) {
         int k = 0;
         char token[MAX_ELEMENT_SIZE] = { '\0' }; // variable, function name or a number
         char tmp_func_str[MAX_ELEMENT_SIZE] = { '\0' };
+
+        if (is_pow(expression, i)){
+            double res = pow_counting(expression, i);
+        }
+
         if ((expression[i] >= '0' && expression[i] <= '9')
             || (expression[i] >= 'A' && expression[i] <= 'Z')
             || (expression[i] >= 'a' && expression[i] <= 'z')) { // not an operand

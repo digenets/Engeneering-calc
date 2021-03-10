@@ -12,7 +12,7 @@
 LINEAR_MAP ParseVariables(char** strings, int number_of_vars) {
     LINEAR_MAP vars_map = CreateMap();
     // add constants
-    PAIR_STRING_DOUBLE pi = {"PI", M_PI};
+    PAIR_STRING_DOUBLE pi = {"PI", M_PI}; // добавляет пару строка - значение в map для переменных
     Insert(&vars_map, &pi);
     PAIR_STRING_DOUBLE e = {"e", M_E};
     Insert(&vars_map, &e);
