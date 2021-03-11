@@ -12,6 +12,6 @@ add_executable(Engineering_calc
         calculation.c calculation.h
         rpn_creating.c rpn_creating.h
         constants.h
-        stack_strings.c stack_strings.h rpn_utilities.c rpn_utilities.h)
+        stack_strings.c stack_strings.h rpn_utilities.c rpn_utilities.h pow_utilities.c pow_utilities.h)
 
 target_link_libraries(Engineering_calc PRIVATE m)
