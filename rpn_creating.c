@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
+#include "pow_utilities.h"
 #include "rpn_creating.h"
 #include "constants.h"
 #include "stack_strings.h"
@@ -48,10 +49,11 @@ bool is_pow(char* expression, int position) {
             return true;
         else return false;
     }
+    position-=4; // ?
     return false;
 }
 
-double pow_counting(char * expression, int position){
+double pow_counting(char * expression, int position, LINEAR_MAP* vars_map){
     position+=4;
     int exp_rpn_objects_counter = 0;
     int c = 0;
@@ -74,38 +76,48 @@ double pow_counting(char * expression, int position){
         tmp_exp++;
         c++;
     }
-    tmp_exp-=c;
+    tmp_exp -= c;
     position++;
     if (expression[position] == ' ')
         position++;
-    exp1_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter);
+    exp1_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter, vars_map);
+    ReplaceWithVarsValues(exp1_rpn, exp_rpn_objects_counter, vars_map);
     double exp1_result = Calculate(exp1_rpn, exp_rpn_objects_counter);
     tmp_exp -= c;
     memset(tmp_exp, '\0', c+1);
     int exp_symb_number = 0;
+    c = 0;
     while (expression[position] != ')'){
         exp_symb_number++;
         if (expression[position] == '('){
             while(expression[position] != ')'){
                 position++;
+                c++;
                 exp_symb_number++;
             }
             position++;
+            c++;
             exp_symb_number++;
         }
         position++;
+        c++;
     }
+    position -= c;
     c = 0;
-    for (int j = position-1; j < position-1 + exp_symb_number; j++){
+    for (int j = position; j < position + exp_symb_number; j++){
         *tmp_exp = expression[j];
         c++;
         tmp_exp++;
     }
     tmp_exp-=c;
     exp_rpn_objects_counter = 0;
-    exp2_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter);
+    exp2_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter, vars_map);
+    ReplaceWithVarsValues(exp2_rpn, exp_rpn_objects_counter, vars_map);
     double exp2_result = Calculate(exp2_rpn, exp_rpn_objects_counter);
     double pow_result = pow(exp1_result, exp2_result);
+    free(tmp_exp);
+    free(exp1_rpn);
+    free(exp2_rpn);
     return pow_result;
 }
       /*  else{
@@ -113,7 +125,7 @@ double pow_counting(char * expression, int position){
         } */
 
 
-char** GetRpn(char* expression, int* rpn_objects_counter) {
+char** GetRpn(char* expression, int* rpn_objects_counter, LINEAR_MAP* vars_map) {
     expression = ReplaceUnaryMinus(expression);  // убирается унарный минус
 
     int cur_rpn = 0;
@@ -135,10 +147,6 @@ char** GetRpn(char* expression, int* rpn_objects_counter) {
         int k = 0;
         char token[MAX_ELEMENT_SIZE] = { '\0' }; // variable, function name or a number
         char tmp_func_str[MAX_ELEMENT_SIZE] = { '\0' };
-
-        if (is_pow(expression, i)){
-            double res = pow_counting(expression, i);
-        }
 
         if ((expression[i] >= '0' && expression[i] <= '9')
             || (expression[i] >= 'A' && expression[i] <= 'Z')

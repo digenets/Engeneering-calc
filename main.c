@@ -42,7 +42,7 @@ LINEAR_MAP ParseVariables(char** strings, int number_of_vars) {
         double value = 0;
         if (!IsDigit(vars_values[i])) {
             int rpn_objects_counter = 0;
-            char** rpn = GetRpn(vars_values[i], &rpn_objects_counter);
+            char** rpn = GetRpn(vars_values[i], &rpn_objects_counter, &vars_map);
             ReplaceWithVarsValues(rpn, rpn_objects_counter, &vars_map);
             value = Calculate(rpn, rpn_objects_counter);
         } else {
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     LINEAR_MAP vars_map = ParseVariables(input_strings, number_of_vars);
 
     int rpn_objects_counter = 0;
-    char** rpn = GetRpn(expression, &rpn_objects_counter);
+    char** rpn = GetRpn(expression, &rpn_objects_counter, &vars_map);
     ReplaceWithVarsValues(rpn, rpn_objects_counter, &vars_map);
     double result = Calculate(rpn, rpn_objects_counter);
     FILE* file_output = fopen(argv[2], "w");
