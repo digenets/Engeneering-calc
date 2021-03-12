@@ -121,7 +121,7 @@ void RpnCalculationTest() {
 
 void ReplaceUnaryMinusTest() {
     char* expression = "-1-2";
-    expression = ReplaceUnaryMinus(expression);
+    expression = replace_unary_minus(expression);
     char* expected = "~1-2";
     if (strcmp(expected, expression) != 0) {
         printf("Wrong replacement: %s, expected: %s", expression, expected);
@@ -129,7 +129,7 @@ void ReplaceUnaryMinusTest() {
     }
 
     char* expression2 = "2 + (-1)";
-    expression2 = ReplaceUnaryMinus(expression2);
+    expression2 = replace_unary_minus(expression2);
     char* expected2 = "2 + (~1)";
     if (strcmp(expected2, expression2) != 0) {
         printf("Wrong replacement: %s, expected: %s", expression2, expected2);

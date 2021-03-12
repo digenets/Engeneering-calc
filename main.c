@@ -83,10 +83,10 @@ int main(int argc, char** argv) {
     }
     LINEAR_MAP vars_map = ParseVariables(input_strings, number_of_vars);
 
-    int rpn_objects_counter = 0;
-    char** rpn = GetRpn(expression, &rpn_objects_counter, &vars_map);
-    ReplaceWithVarsValues(rpn, rpn_objects_counter, &vars_map);
-    double result = Calculate(rpn, rpn_objects_counter);
+    int rpn_objects_number = 0;
+    char** rpn = GetRpn(expression, &rpn_objects_number, &vars_map);
+    ReplaceWithVarsValues(rpn, rpn_objects_number, &vars_map);
+    double result = Calculate(rpn, rpn_objects_number);
     FILE* file_output = fopen(argv[2], "w");
     fprintf(file_output, "%lf", result);
     return 0;
