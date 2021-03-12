@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
 #include <math.h>
 #include "linear_map.h"
 
 LINEAR_MAP CreateMap() {
-    int capacity = 10; // количество чего?
+    int capacity = INITIAL_CAPACITY;
     PAIR_STRING_DOUBLE* pairs = (PAIR_STRING_DOUBLE*) malloc(sizeof(PAIR_STRING_DOUBLE) * capacity);
     LINEAR_MAP map;
     map.pairs = pairs;
