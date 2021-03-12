@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
-#include "pow_utilities.h"
 #include "rpn_creating.h"
 #include "constants.h"
 #include "stack_strings.h"
