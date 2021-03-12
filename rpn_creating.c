@@ -1,190 +1,289 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <math.h>
 #include "rpn_creating.h"
 #include "constants.h"
 #include "stack_strings.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "calculation.h"
 
 char* ReplaceUnaryMinus(char* expression) {
     // либо минус стоит в начале выражения: -1+...
     // либо в середине в скобках: ... + (-1) + ...
-    char* replaced = (char*) malloc(sizeof(char) * MAX_EXPR_SIZE);
-    strcpy(replaced, expression);
+    char* result = (char*) malloc(sizeof(char) * MAX_EXPR_SIZE);
+    strcpy(result, expression);
     if (expression[0] == '-') {
-        replaced[0] = '~';
+        result[0] = '~';
     }
     for (int i = 1; i < strlen(expression); ++i) {
         if (expression[i-1] == '(' && expression[i] == '-') {
-            replaced[i] = '~';
+            result[i] = '~';
         }
     }
-    return replaced;
+    return result;
 }
 
-int is_oper (char c) {
-    if (c == '^' || c == '~') {
+int is_operator (char symb) {
+    if (symb == '^' || symb == '~') {
         return 3;
     }
-    if ((c == '*') || (c == '/')) {
+    if ((symb == '*') || (symb == '/')) {
         return 2;
     }
-    if ((c == '+') || (c == '-')) {
+    if ((symb == '+') || (symb == '-')) {
         return 1;
     }
     return 0;
 }
 
-char** GetRpn(char* expression, int* rpn_objects_counter) {
-    expression = ReplaceUnaryMinus(expression);
+bool is_pow(char* expression, int position) {
+    if (expression[position] == 'p') {
+        char token[MAX_EXPR_SIZE] = {'\0'};
+        for (int j = 0; j < 4; j++) {
+            token[j] = expression[position];
+            position++;
+        }
+        if (strcmp(token, "pow(") == 0)
+            return true;
+        else return false;
+    }
+    return false;
+}
+// pow(adc+5, 2)
+double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
+    int exp_rpn_objects_number = 0;
+    int exp1_symb_number = 0;
+    int c = 0;
 
-    int cur_rpn = 0;
-    char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
-    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
-        rpn[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
-        memset(rpn[i], '\0', MAX_ELEMENT_SIZE);
+    *position+=4;
+
+    char* exp_buffer = (char*) malloc(sizeof(char) * MAX_EXPR_SIZE);
+    memset(exp_buffer, '\0', MAX_EXPR_SIZE);
+
+    char** exp1_rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int j = 0; j < MAX_RPN_SIZE; ++j){
+        exp1_rpn[j] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(exp1_rpn[j], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
     }
-    int cur_oper_stack = 0;
-    char** oper_stack = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
-    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
-        oper_stack[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE);
-        memset(oper_stack[i], '\0', MAX_ELEMENT_SIZE);
+
+    char** exp2_rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE);
+    for (int j = 0; j < MAX_RPN_SIZE; ++j){
+        exp2_rpn[j] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(exp2_rpn[j], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
     }
+
+    while (expression[*position] != ',') {
+        *exp_buffer = expression[*position];
+        ++*position;
+        exp_buffer++;
+        c++;
+    }
+    exp_buffer -= c;
+    ++*position;
+
+    if (expression[*position] == ' ')
+        ++*position;
+
+    exp1_rpn = GetRpn(exp_buffer, &exp_rpn_objects_number, vars_map);
+    ReplaceWithVarsValues(exp1_rpn, exp_rpn_objects_number, vars_map);
+    double exp1_result = Calculate(exp1_rpn, exp_rpn_objects_number);
+    memset(exp_buffer, '\0', MAX_ELEMENT_SIZE);
+    c = 0;
+
+    while (expression[*position] != ')'){
+        exp1_symb_number++;
+        if (expression[*position] == '('){
+            while(expression[*position] != ')'){
+                ++*position;
+                c++;
+                exp1_symb_number++;
+            }
+            if (expression[*position] != ')') {
+                ++*position;
+                c++;
+                exp1_symb_number++;
+            }
+        }
+        ++*position;
+        c++;
+    }
+    *position -= c;
+    int tmp = c;
+    c = 0;
+
+    for (int j = *position; j < *position + exp1_symb_number; j++){
+        *exp_buffer = expression[j];
+        c++;
+        exp_buffer++;
+    }
+
+    exp_buffer-=c;
+    exp_rpn_objects_number = 0;
+    exp2_rpn = GetRpn(exp_buffer, &exp_rpn_objects_number, vars_map);
+    ReplaceWithVarsValues(exp2_rpn, exp_rpn_objects_number, vars_map);
+    double exp2_result = Calculate(exp2_rpn, exp_rpn_objects_number);
+    double pow_result = pow(exp1_result, exp2_result);
+    *position += tmp;
+    free(exp_buffer);
+    free(exp1_rpn);
+    free(exp2_rpn);
+    return pow_result;
+}
+
+char** GetRpn(char* expression, int* rpn_objects_number, LINEAR_MAP* vars_map) {
+    expression = ReplaceUnaryMinus(expression);  // убирается унарный минус
+
+    int rpn_position = 0;
+    char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE); // массив строк под rpn
+    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
+        rpn[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(rpn[i], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
+    }
+    int operator_stack_position = 0;
+    char** operator_stack = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE); // массив строк под операторный стек
+    for (int i = 0; i < MAX_RPN_SIZE; ++i) {
+        operator_stack[i] = (char*) malloc(sizeof(char) * MAX_ELEMENT_SIZE); // выделяется память под строки
+        memset(operator_stack[i], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
+    }
+
 
     for (int i = 0; i < strlen(expression); i++) {
-        int is_func = 0;
-        int is_variable = 0;
-        int k = 0;
-        char token[MAX_ELEMENT_SIZE] = { '\0' }; // variable, function name or a number
-        char tmp_func_str[MAX_ELEMENT_SIZE] = { '\0' };
-        if ((expression[i] >= '0' && expression[i] <= '9')
+        
+        int      is_function = 0;
+        int      is_variable = 0;
+        int      k = 0;
+        char     token[MAX_ELEMENT_SIZE] = { '\0' };
+        char     function_buffer[MAX_ELEMENT_SIZE] = {'\0' };
+ 
+        if (((expression[i] >= '0' && expression[i] <= '9')
             || (expression[i] >= 'A' && expression[i] <= 'Z')
-            || (expression[i] >= 'a' && expression[i] <= 'z')) { // not an operand
+            || (expression[i] >= 'a' && expression[i] <= 'z')) && !is_pow(expression, i)) {
             for (int j = i; j < strlen(expression); j++) {
-                if (is_oper(expression[j])) {
+                if (is_operator(expression[j])) {
                     break;
                 }
-                if (expression[j] == ')') {//WARNING
+                if (expression[j] == ')') {
                     break;
                 }
                 token[k] = expression[j];
                 k++;
             }
-
-            // если имя переменной заканчивается пробелом, убираем его
             if (token[strlen(token) - 1] == ' ') {
                 token[strlen(token) - 1] = '\0';
             }
 
             for (int n = 0; n < strlen(token); n++) {
                 if (token[n] == '(') {
-                    is_func = 1;
+                    is_function = 1;
                     is_variable = 0;
                     break;
                 }
             }
-            if (!is_func) {
-                is_func = 0;
+            if (!is_function) {
+                is_function = 0;
                 is_variable = 1;
             } else {
-                strcpy(tmp_func_str, token);
+                strcpy(function_buffer, token);
             }
         }
 
-        if (!is_func && is_variable) {
-            cur_rpn = push(rpn, cur_rpn, token); // function "push" return cur_rpn++
-            i = i + k - 1;
-        } else if (is_func) {
-            //count number of letters in name of function
+            if (is_pow(expression, i)){
+                char* pow_string = malloc(sizeof(char) * MAX_EXPR_SIZE);
+                memset(pow_string, '\0', MAX_EXPR_SIZE);
+                double pow_counting_result = pow_counting(expression, &i, vars_map);
+                sprintf(pow_string, "%lf", pow_counting_result);
+                rpn_position = push(rpn, rpn_position, pow_string);
+            }
+            else if ((!is_function && is_variable)) {
+                rpn_position = push(rpn, rpn_position, token); // function "push" return rpn_position++
+                i = i + k - 1;
+            }
+
+        else if (is_function) {
             int counter = 0;
-            for (int j = 0; j < strlen(tmp_func_str); j++) {
+            for (int j = 0; j < strlen(function_buffer); j++) {
                 counter++;
-                if (tmp_func_str[j] == '(') {
+                if (function_buffer[j] == '(') {
                     break;
                 }
             }
             i = i + counter - 2;
-            // add '\0' to the end of string
-            for (int j = 0; j < strlen(tmp_func_str); j++) {
+            for (int j = 0; j < strlen(function_buffer); j++) {
                 if (j >= counter - 1) {
-                    tmp_func_str[j] = '\0';
+                    function_buffer[j] = '\0';
                 }
             }
-            cur_oper_stack = push(oper_stack, cur_oper_stack, tmp_func_str);
-        } else if (is_oper(expression[i])) {
-            char tmp_top = top(oper_stack, cur_oper_stack);
-            char str_tmp_top[MAX_ELEMENT_SIZE] = {'\0'};
-            str_tmp_top[0] = tmp_top;
-            // Check that top of stack is operator
-            while  ((!is_empty(oper_stack, cur_oper_stack) && is_oper(str_tmp_top[0])) // пока стек не пустой и в топе оператор
-                    &&
+            operator_stack_position = push(operator_stack, operator_stack_position, function_buffer);
+        }
+        else if (is_operator(expression[i])) {
+            char head = top(operator_stack, operator_stack_position);
+            char str_head[MAX_ELEMENT_SIZE] = {'\0'};
+            str_head[0] = head;
+            while  ((!is_empty(operator_stack, operator_stack_position) && is_operator(str_head[0])) // пока стек не пустой и в топе оператор
+                    && (((is_operator(expression[i]) == 1 || is_operator(expression[i]) == 2) && (is_operator(expression[i]) <=
+                    is_operator(str_head[0]))/*и приоритет токена меньше либо равен топу*/) || ((is_operator(expression[i]) == 3)
+                    /*токен правоасоц*/ && (is_operator(expression[i]) < is_operator(str_head[0])) /*и приоритет токена меньше топа*/))
+                    && str_head[0] != '(')
+            {
+                head = top(operator_stack, operator_stack_position);
+                str_head[0] = head;
+                rpn_position = push(rpn, rpn_position, str_head);
+                operator_stack_position = pop(operator_stack, operator_stack_position);
 
-                    (
-                            /*либо*/((is_oper(expression[i]) == 1 || is_oper(expression[i]) == 2)/*токен левоасоц*/ && (is_oper(expression[i]) <= is_oper(str_tmp_top[0]))/*и приоритет токена меньше либо равен топу*/)
-                                    ||
-                                    /*либо*/((is_oper(expression[i]) == 3) /*токен правоасоц*/ && (is_oper(expression[i]) < is_oper(str_tmp_top[0])) /*и приоритет токена меньше топа*/)
-                    )
-
-                    && str_tmp_top[0] != '('
-                    )
-            {//while cycle
-                tmp_top = top(oper_stack, cur_oper_stack);
-                str_tmp_top[0] = tmp_top;
-                cur_rpn = push(rpn, cur_rpn, str_tmp_top);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
-                //retake
-                tmp_top = top(oper_stack, cur_oper_stack);
-                memset(str_tmp_top, '\0', strlen(str_tmp_top));
-                str_tmp_top[0] = tmp_top;
+                head = top(operator_stack, operator_stack_position);
+                memset(str_head, '\0', strlen(str_head));
+                str_head[0] = head;
             }
-            //end of while cycle
 
-            char str_tmp_oper[MAX_ELEMENT_SIZE] = { '\0' };
-            str_tmp_oper[0] = expression[i];
-            cur_oper_stack = push(oper_stack, cur_oper_stack, str_tmp_oper);
+
+            char str_oper[MAX_ELEMENT_SIZE] = {'\0' };
+            str_oper[0] = expression[i];
+            operator_stack_position = push(operator_stack, operator_stack_position, str_oper);
         }
         else if (expression[i] == '(') {
             char open_bracket_str[MAX_ELEMENT_SIZE] = {'\0'};
-            open_bracket_str[0] = '('; //str where first element is "("
-            cur_oper_stack = push(oper_stack, cur_oper_stack, open_bracket_str);
+            open_bracket_str[0] = '(';
+            operator_stack_position = push(operator_stack, operator_stack_position, open_bracket_str);
         }
         else if (expression[i] == ')') {
-            while (top(oper_stack, cur_oper_stack) != '(') {
+            while (top(operator_stack, operator_stack_position) != '(') {
                 char str_tmp_top[MAX_ELEMENT_SIZE] = {'\0'};
-                char tmp_top = top(oper_stack, cur_oper_stack);
+                char tmp_top = top(operator_stack, operator_stack_position);
                 str_tmp_top[0] = tmp_top;
-                cur_rpn = push(rpn, cur_rpn, str_tmp_top);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+                rpn_position = push(rpn, rpn_position, str_tmp_top);
+                operator_stack_position = pop(operator_stack, operator_stack_position);
             }
-            if (top(oper_stack, cur_oper_stack) == '(') {
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+            if (top(operator_stack, operator_stack_position) == '(') {
+                operator_stack_position = pop(operator_stack, operator_stack_position);
             }
-            if ((top(oper_stack, cur_oper_stack) >= 'A' && top(oper_stack, cur_oper_stack) <= 'Z')
-                || (top(oper_stack, cur_oper_stack) >= 'a' && top(oper_stack, cur_oper_stack) <= 'z')) {
-                cur_rpn = push(rpn, cur_rpn, oper_stack[cur_oper_stack-1]);
-                cur_oper_stack = pop(oper_stack, cur_oper_stack);
+            if ((top(operator_stack, operator_stack_position) >= 'A' && top(operator_stack, operator_stack_position) <= 'Z')
+                || (top(operator_stack, operator_stack_position) >= 'a' && top(operator_stack, operator_stack_position) <= 'z')) {
+                rpn_position = push(rpn, rpn_position, operator_stack[operator_stack_position - 1]);
+                operator_stack_position = pop(operator_stack, operator_stack_position);
             }
         }
     }
-    while (!is_empty(oper_stack, cur_oper_stack)) {
-        char top_oper[MAX_ELEMENT_SIZE];
-        top_oper[0] = top(oper_stack, cur_oper_stack);
-        cur_rpn = push(rpn, cur_rpn, top_oper);
-        cur_oper_stack = pop(oper_stack, cur_oper_stack);
+    while (!is_empty(operator_stack, operator_stack_position)) {
+        char head_oper[MAX_ELEMENT_SIZE];
+        head_oper[0] = top(operator_stack, operator_stack_position);
+        rpn_position = push(rpn, rpn_position, head_oper);
+        operator_stack_position = pop(operator_stack, operator_stack_position);
     }
 
     for (int i = 0; i < MAX_RPN_SIZE; ++i) {
-        free(oper_stack[i]);
+        free(operator_stack[i]);
     }
-    free(oper_stack);
+    free(operator_stack);
 
     printf("{");
-    for (int i = 0; i < cur_rpn; i++) {
+    for (int i = 0; i < rpn_position; i++) {
         printf("%s,",rpn[i]);
     }
     printf("}\n");
 
     for (int i = 0; rpn[i][0] != '\0'; i++) {
-        ++(*rpn_objects_counter);
+        ++(*rpn_objects_number);
     }
     return rpn;
 }
