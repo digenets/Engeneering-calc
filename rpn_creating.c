@@ -69,7 +69,7 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
         memset(exp2_rpn[j], '\0', MAX_ELEMENT_SIZE); // строки заполняются '\0'
     }
 
-    while (expression[*position] != ','){
+    while (expression[*position] != ',') {
         *tmp_exp = expression[*position];
         ++*position;
         tmp_exp++;
@@ -79,6 +79,7 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
     ++*position;
     if (expression[*position] == ' ')
         ++*position;
+
     exp1_rpn = GetRpn(tmp_exp, &exp_rpn_objects_counter, vars_map);
     ReplaceWithVarsValues(exp1_rpn, exp_rpn_objects_counter, vars_map);
     double exp1_result = Calculate(exp1_rpn, exp_rpn_objects_counter);
@@ -116,7 +117,7 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
     ReplaceWithVarsValues(exp2_rpn, exp_rpn_objects_counter, vars_map);
     double exp2_result = Calculate(exp2_rpn, exp_rpn_objects_counter);
     double pow_result = pow(exp1_result, exp2_result);
-    *position += tmp+1;
+    *position += tmp;
     free(tmp_exp);
     free(exp1_rpn);
     free(exp2_rpn);
@@ -197,8 +198,8 @@ char** GetRpn(char* expression, int* rpn_objects_counter, LINEAR_MAP* vars_map) 
                 memset(pow_string, '\0', MAX_EXPR_SIZE);
                 // ftoa(pow_counting(expression, &i, vars_map), pow_string, 3);
                 double d = pow_counting(expression, &i, vars_map);
-                sprintf(pow_string, "%f", d);
-                push(rpn, cur_rpn, pow_string);
+                sprintf(pow_string, "%.6lf", d);
+                cur_rpn = push(rpn, cur_rpn, pow_string);
             }
             else {
                 cur_rpn = push(rpn, cur_rpn, token); // function "push" return cur_rpn++
