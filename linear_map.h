@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include "pair_string_double.h"
 
+#define INITIAL_CAPACITY 10
+
 typedef struct LinearMap {
     PAIR_STRING_DOUBLE* pairs;
     size_t capacity;
