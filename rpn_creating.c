@@ -8,7 +8,7 @@
 #include "stack_strings.h"
 #include "calculation.h"
 
-char* replace_unary_minus(char* expression) {
+char* ReplaceUnaryMinus(char* expression) {
     // либо минус стоит в начале выражения: -1+...
     // либо в середине в скобках: ... + (-1) + ...
     char* result = (char*) malloc(sizeof(char) * MAX_EXPR_SIZE);
@@ -50,10 +50,10 @@ bool is_pow(char* expression, int position) {
     }
     return false;
 }
-
+// pow(adc+5, 2)
 double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
     int exp_rpn_objects_number = 0;
-    int exp_symb_number = 0;
+    int exp1_symb_number = 0;
     int c = 0;
 
     *position+=4;
@@ -92,17 +92,17 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
     c = 0;
 
     while (expression[*position] != ')'){
-        exp_symb_number++;
+        exp1_symb_number++;
         if (expression[*position] == '('){
             while(expression[*position] != ')'){
                 ++*position;
                 c++;
-                exp_symb_number++;
+                exp1_symb_number++;
             }
             if (expression[*position] != ')') {
                 ++*position;
                 c++;
-                exp_symb_number++;
+                exp1_symb_number++;
             }
         }
         ++*position;
@@ -112,7 +112,7 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
     int tmp = c;
     c = 0;
 
-    for (int j = *position; j < *position + exp_symb_number; j++){
+    for (int j = *position; j < *position + exp1_symb_number; j++){
         *exp_buffer = expression[j];
         c++;
         exp_buffer++;
@@ -132,7 +132,7 @@ double pow_counting(char * expression, int* position, LINEAR_MAP* vars_map){
 }
 
 char** GetRpn(char* expression, int* rpn_objects_number, LINEAR_MAP* vars_map) {
-    expression = replace_unary_minus(expression);  // убирается унарный минус
+    expression = ReplaceUnaryMinus(expression);  // убирается унарный минус
 
     int rpn_position = 0;
     char** rpn = (char**) malloc(sizeof(char*) * MAX_RPN_SIZE); // массив строк под rpn
@@ -149,13 +149,10 @@ char** GetRpn(char* expression, int* rpn_objects_number, LINEAR_MAP* vars_map) {
 
 
     for (int i = 0; i < strlen(expression); i++) {
-        if (i>strlen(expression))
-            break;
         
         int      is_function = 0;
         int      is_variable = 0;
         int      k = 0;
-        double   a = 0;
         char     token[MAX_ELEMENT_SIZE] = { '\0' };
         char     function_buffer[MAX_ELEMENT_SIZE] = {'\0' };
  
@@ -191,21 +188,18 @@ char** GetRpn(char* expression, int* rpn_objects_number, LINEAR_MAP* vars_map) {
             }
         }
 
-        if ((!is_function && is_variable) || is_pow(expression, i)) {
             if (is_pow(expression, i)){
-                char* pow_string;
-                pow_string = malloc(sizeof(char) * MAX_EXPR_SIZE);
+                char* pow_string = malloc(sizeof(char) * MAX_EXPR_SIZE);
                 memset(pow_string, '\0', MAX_EXPR_SIZE);
-                // ftoa(pow_counting(expression, &i, vars_map), pow_string, 3);
-                double d = pow_counting(expression, &i, vars_map);
-                sprintf(pow_string, "%.6lf", d);
+                double pow_counting_result = pow_counting(expression, &i, vars_map);
+                sprintf(pow_string, "%lf", pow_counting_result);
                 rpn_position = push(rpn, rpn_position, pow_string);
             }
-            else {
+            else if ((!is_function && is_variable)) {
                 rpn_position = push(rpn, rpn_position, token); // function "push" return rpn_position++
                 i = i + k - 1;
             }
-        }
+
         else if (is_function) {
             int counter = 0;
             for (int j = 0; j < strlen(function_buffer); j++) {
